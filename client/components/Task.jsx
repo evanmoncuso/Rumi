@@ -1,6 +1,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { completeTaskToServer } from '../actions/taskActions';
+import { claimTask } from '../actions/claimActions';
+
+// Material things
+import RaisedButton from 'material-ui/RaisedButton';
+import Popover from 'material-ui/Popover';
+import Menu from 'material-ui/Menu';
+import MenuItem from 'material-ui/MenuItem';
 
 let style = {
   height: 50,
@@ -14,7 +21,9 @@ let style = {
 class Task extends React.Component {
   constructor(props) {
     super(props);
-    console.log('Task props:', props);
+    this.state = {
+      open: false,
+    }
   }
 
   roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -52,7 +61,7 @@ class Task extends React.Component {
     }
   }
 
-  completeTask () {
+  completeTask() {
     let taskId = this.props.id;
     this.props.dispatch(completeTaskToServer({taskId}));
   }
@@ -60,15 +69,37 @@ class Task extends React.Component {
   componentDidMount() {
     const ctx = this.refs.canvas.getContext('2d');
     var colors = {
-      recent: '5ED848',
-      urgent: 'E39E2E',
-      overdue: 'F0401D'
+      recent: '#5ED848',
+      urgent: '#E39E2E',
+      overdue: '#F0401D'
     };
 
     var fill = colors.recent;
     this.roundRect(ctx, 0, 0, 108, 108, 6, fill);
     const bottomY = 72;
     ctx.clearRect(0, 0, 108, bottomY);
+  }
+  // helpers for the model
+  handleTouchTap(event) {
+    event.preventDefault();
+
+    this.setState({
+      open: true,
+      anchorEl: event.currentTarget,
+    });
+  }
+
+  handleRequestClose() {
+    this.setState({
+      open: false,
+    });
+  }
+
+  claimTask() {
+    let taskId = this.props.id;
+    console.log(taskId);
+    console.log(this.props);
+    // this.props.dispatch(claimTaskToServer( {taskId} ));
   }
 
   render() {
@@ -84,17 +115,40 @@ class Task extends React.Component {
 
     return (
       <div>
-        <div className="outerTaskBox">
+        <div className="outerTaskBox" onTouchTap={this.handleTouchTap.bind(this)}>
             <canvas ref="canvas" width={108} height={108} />
             <div className="innerTaskText">
               {this.props.name}
             </div>
         </div>
+        <div>
+         <Popover
+           open={this.state.open}
+           anchorEl={this.state.anchorEl}
+           anchorOrigin={{horizontal: 'left', vertical: 'bottom'}}
+           targetOrigin={{horizontal: 'left', vertical: 'top'}}
+           onRequestClose={this.handleRequestClose.bind(this)}>
+           <Menu>
+             <MenuItem
+               primaryText="Claim for later"
+               onClick={this.claimTask.bind(this)} />
+             <MenuItem
+               primaryText="Complete"
+               onClick={this.completeTask.bind(this)} />
+             <MenuItem
+               primaryText="edit time due"
+               onClick={() => {
+                 console.log('edit due time of the task')
+               }} />
+
+           </Menu>
+         </Popover>
+       </div>
       </div>
     );
   }
 }
 
-// Task = connect()(Task);
-// onTouchTap={this.completeTask.bind(this)}
+Task = connect()(Task);
+
 export default Task;
